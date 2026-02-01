@@ -10,11 +10,34 @@ type PluginConfig = {
 };
 
 async function mcporterCall(args: string[]): Promise<any> {
-  const { stdout } = await execFileAsync("mcporter", args, {
-    timeout: 60_000,
-    maxBuffer: 10 * 1024 * 1024,
-  });
-  return JSON.parse(stdout);
+  try {
+    const { stdout } = await execFileAsync("mcporter", args, {
+      timeout: 60_000,
+      maxBuffer: 10 * 1024 * 1024,
+    });
+
+    // mcporter should output JSON when invoked with --output json, but be defensive.
+    return JSON.parse(stdout);
+  } catch (err: any) {
+    const stdout = String(err?.stdout ?? "");
+    const stderr = String(err?.stderr ?? "");
+    const message = String(err?.message ?? err);
+
+    // Return an OpenClaw tool response envelope (not throwing avoids opaque JSON parse errors).
+    return {
+      isError: true,
+      content: [
+        {
+          type: "text",
+          text:
+            "mcporter invocation failed.\n\n" +
+            `message: ${message}\n` +
+            (stderr ? `\n--- stderr ---\n${stderr}\n` : "") +
+            (stdout ? `\n--- stdout ---\n${stdout}\n` : ""),
+        },
+      ],
+    };
+  }
 }
 
 function clip(s: string, maxChars: number): string {
@@ -82,14 +105,25 @@ export default function (api: any) {
         let resolvedSummary = "";
 
         if (!libraryId) {
-          const q = lib || query;
+          if (!lib) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text:
+                    "Context7: missing 'library'. Provide a library name (e.g. 'FastAPI') or a Context7 libraryId like '/tiangolo/fastapi'.",
+                },
+              ],
+            };
+          }
+
           const resolved = await mcporterCall([
             "call",
             `${serverName}.resolve-library-id`,
             "--config",
             mcporterConfigPath,
             "--args",
-            JSON.stringify({ query: q }),
+            JSON.stringify({ query, libraryName: lib }),
             "--output",
             "json",
           ]);
