@@ -9,34 +9,24 @@ type PluginConfig = {
   maxChars?: number;
 };
 
-async function mcporterCall(args: string[]): Promise<any> {
+async function mcporterCallText(args: string[]): Promise<string> {
   try {
     const { stdout } = await execFileAsync("mcporter", args, {
       timeout: 60_000,
       maxBuffer: 10 * 1024 * 1024,
     });
-
-    // mcporter should output JSON when invoked with --output json, but be defensive.
-    return JSON.parse(stdout);
+    return String(stdout ?? "");
   } catch (err: any) {
     const stdout = String(err?.stdout ?? "");
     const stderr = String(err?.stderr ?? "");
     const message = String(err?.message ?? err);
 
-    // Return an OpenClaw tool response envelope (not throwing avoids opaque JSON parse errors).
-    return {
-      isError: true,
-      content: [
-        {
-          type: "text",
-          text:
-            "mcporter invocation failed.\n\n" +
-            `message: ${message}\n` +
-            (stderr ? `\n--- stderr ---\n${stderr}\n` : "") +
-            (stdout ? `\n--- stdout ---\n${stdout}\n` : ""),
-        },
-      ],
-    };
+    return (
+      "mcporter invocation failed.\n\n" +
+      `message: ${message}\n` +
+      (stderr ? `\n--- stderr ---\n${stderr}\n` : "") +
+      (stdout ? `\n--- stdout ---\n${stdout}\n` : "")
+    );
   }
 }
 
@@ -117,7 +107,7 @@ export default function (api: any) {
             };
           }
 
-          const resolved = await mcporterCall([
+          const text = await mcporterCallText([
             "call",
             `${serverName}.resolve-library-id`,
             "--config",
@@ -127,11 +117,6 @@ export default function (api: any) {
             "--output",
             "json",
           ]);
-
-          // Best-effort extraction (Context7 returns structured text; mcporter returns tool response envelope)
-          const text =
-            resolved?.content?.find?.((c: any) => c?.type === "text")?.text ??
-            JSON.stringify(resolved, null, 2);
 
           resolvedSummary = text;
 
@@ -155,7 +140,7 @@ export default function (api: any) {
           }
         }
 
-        const docs = await mcporterCall([
+        const docsText = await mcporterCallText([
           "call",
           `${serverName}.query-docs`,
           "--config",
@@ -165,10 +150,6 @@ export default function (api: any) {
           "--output",
           "json",
         ]);
-
-        const docsText =
-          docs?.content?.find?.((c: any) => c?.type === "text")?.text ??
-          JSON.stringify(docs, null, 2);
 
         const header = looksLikeLibraryId
           ? `Context7 docs for ${libraryId}\n\n`
