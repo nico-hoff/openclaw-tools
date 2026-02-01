@@ -1,0 +1,8 @@
+{
+  "name": "openclaw-plugin-context7-mcporter",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.16"
+  }
+}

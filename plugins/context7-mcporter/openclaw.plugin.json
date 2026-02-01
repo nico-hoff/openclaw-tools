@@ -1,0 +1,16 @@
+{
+  "id": "context7-mcporter",
+  "name": "Context7 via mcporter",
+  "description": "Expose Context7 MCP docs lookup as an OpenClaw tool by shelling out to mcporter.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "mcporterConfigPath": { "type": "string" },
+      "serverName": { "type": "string" },
+      "maxChars": { "type": "integer", "minimum": 1000, "maximum": 200000 }
+    },
+    "required": ["mcporterConfigPath"]
+  }
+}
