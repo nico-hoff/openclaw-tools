@@ -85,7 +85,7 @@ export default function (api: any) {
           const q = lib || query;
           const resolved = await mcporterCall([
             "call",
-            `${serverName}.resolve-library-id",
+            `${serverName}.resolve-library-id`,
             "--config",
             mcporterConfigPath,
             "--args",
@@ -123,7 +123,7 @@ export default function (api: any) {
 
         const docs = await mcporterCall([
           "call",
-          `${serverName}.query-docs",
+          `${serverName}.query-docs`,
           "--config",
           mcporterConfigPath,
           "--args",
