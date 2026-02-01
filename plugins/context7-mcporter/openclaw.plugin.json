@@ -11,6 +11,6 @@
       "serverName": { "type": "string" },
       "maxChars": { "type": "integer", "minimum": 1000, "maximum": 200000 }
     },
-    "required": ["mcporterConfigPath"]
+    "required": []
   }
 }

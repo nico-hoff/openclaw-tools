@@ -1,4 +1,3 @@
-import { Type } from "@sinclair/typebox";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -25,7 +24,7 @@ function clip(s: string, maxChars: number): string {
 
 export default function (api: any) {
   const cfg: PluginConfig = api.getConfig?.() ?? {};
-  const mcporterConfigPath = cfg.mcporterConfigPath;
+  const mcporterConfigPath = cfg.mcporterConfigPath ?? "/home/pi/.openclaw/workspace/config/mcporter.json";
   const serverName = cfg.serverName ?? "context7";
   const maxChars = cfg.maxChars ?? 40_000;
 
@@ -35,23 +34,27 @@ export default function (api: any) {
       description:
         "Look up official library documentation via Context7 (MCP). Uses mcporter under the hood. " +
         "Callers should provide a library name or direct Context7 libraryId, and a query.",
-      parameters: Type.Object({
-        library: Type.Optional(
-          Type.String({
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          library: {
+            type: "string",
             description:
               "Library/package name (e.g. 'FastAPI') OR a Context7 libraryId like '/tiangolo/fastapi'.",
-          }),
-        ),
-        query: Type.String({
-          description: "What you want to know / what to search for in the docs.",
-        }),
-        versionHint: Type.Optional(
-          Type.String({
+          },
+          query: {
+            type: "string",
+            description: "What you want to know / what to search for in the docs.",
+          },
+          versionHint: {
+            type: "string",
             description:
               "Optional version hint (not always used). If libraryId includes version, this can be omitted.",
-          }),
-        ),
-      }),
+          }
+        },
+        required: ["query"]
+      },
       async execute(_id: string, params: any) {
         if (!mcporterConfigPath) {
           return {
